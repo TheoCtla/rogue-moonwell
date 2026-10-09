@@ -6,8 +6,12 @@
 <header><div class="eyebrow">Moonwell x5 · World of Warcraft TBC 2.4.3</div><div class="row"><h1>🗡️ Rogue Tracker</h1><span class="pill">PvP sauvage · Alliance</span></div><p class="intro">Build Finesse / Shadowstep <b>20 / 0 / 41</b>. Suis ton niveau, coche tes talents et synchronise ta progression pour pouvoir la consulter depuis n'importe quel appareil.</p></header>
 <section><div class="row"><h2>Progression</h2><div class="controls"><div><label for="level">Niveau actuel</label><input id="level" type="number" min="10" max="70" value="14"></div><button id="saveLocal">Enregistrer</button></div></div><div class="stats"><div class="stat"><strong id="statLevel">14</strong><span>Niveau</span></div><div class="stat"><strong id="statPoints">0/5</strong><span>Points cochés / disponibles</span></div><div class="stat"><strong id="statTotal">0/61</strong><span>Build terminé</span></div></div><div class="bar"><div class="fill" id="barFill"></div></div><p class="milestone" id="nextGoal"></p><p class="small" id="validation"></p><div class="status" id="localStatus"></div></section>
 <section><div class="row"><h2>Liste des talents niveau par niveau</h2><button class="secondary" id="reset">Tout décocher</button></div><p class="small">Coche chaque étape une fois ses points réellement attribués dans le jeu. Les étapes futures restent visibles : leurs cases ne sont pas bloquées pour te permettre de rattraper ton suivi.</p><div id="steps"></div></section>
-<section><h2>☁️ Synchronisation en ligne (facultative)</h2><p class="intro">Le suivi fonctionne tout de suite, même hors connexion, grâce à une sauvegarde dans ce navigateur. Pour le consulter depuis ChatGPT, publie cette page sur GitHub Pages et configure Supabase avec le fichier <code>supabase.sql</code>.</p><div class="controls"><div><label for="projectUrl">URL du projet Supabase</label><input id="projectUrl" type="text" placeholder="https://xxxx.supabase.co"></div><div><label for="anonKey">Clé publishable / anon (publique)</label><input id="anonKey" type="text" placeholder="sb_publishable_… ou eyJ…"></div><div><label for="slug">Identifiant public du personnage</label><input id="slug" type="text" placeholder="mon-rogue-moonwell"></div></div><p class="small">⚠️ Ne mets jamais une clé <code>service_role</code> ou une clé secrète ici. Seule la clé publique Supabase est autorisée.</p><div class="controls"><button id="saveConfig">Enregistrer la configuration</button><button id="loadCloud" class="secondary">Lire en ligne</button></div><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><p class="small">Pour autoriser les modifications, connecte-toi avec ton adresse email. Les autres visiteurs pourront lire ta progression sans pouvoir la modifier.</p><div class="controls"><div><label for="email">Email (connexion par lien magique)</label><input id="email" type="email" placeholder="toi@exemple.fr"></div><button id="sendMagic">Recevoir un lien de connexion</button><button id="cloudSave" class="secondary">Synchroniser mes modifications</button><button id="signOut" class="secondary">Déconnexion</button></div><p id="cloudStatus" class="status"></p><p class="small">Ton lien de suivi public : <a id="publicLink" href="#">en attente de configuration</a>. Pour que ChatGPT lise l'état à jour, donne-lui cette URL après publication, ou le lien public JSON indiqué ci-dessous.</p><p class="small" id="jsonLink"></p></section>
-<section><details><summary>Sources et fonctionnement</summary><p class="small">Version visée : client d'origine TBC 2.4.3 (niveau maximum 70). Ordre de talents adapté au build Finesse 20/0/41 et vérifié à partir des guides Shadowstep TBC. <a href="https://www.icy-veins.com/tbc-classic/subtlety-rogue-pvp-guide" target="_blank" rel="noopener">Guide Icy Veins</a> · <a href="https://www.warcrafttavern.com/tbc/guides/rogue-shadowstep-pvp/" target="_blank" rel="noopener">Guide Warcraft Tavern</a>.</p><p class="small">Les données restent d'abord dans le navigateur. La lecture en ligne utilise l'API REST Supabase et les politiques de sécurité RLS fournies. Aucun mot de passe n'est stocké par cette page.</p></details></section><footer>Rogue Moonwell · Site personnel indépendant, non affilié à Blizzard ni à Moonwell.</footer></main>
+<section><h2>☁️ Synchronisation en ligne</h2>
+<p class="intro">La progression de <b>Fandebr</b> est chargée depuis Supabase à l’ouverture et sauvegardée automatiquement dès que tu modifies ton niveau ou coches/décoches un talent.</p>
+<p id="cloudStatus" class="status">Connexion au cloud…</p>
+<p class="small">Une copie locale est également conservée dans ce navigateur.</p>
+</section>
+<section><details><summary>Sources et fonctionnement</summary><p class="small">Version visée : client d'origine TBC 2.4.3 (niveau maximum 70). Ordre de talents adapté au build Finesse 20/0/41 et vérifié à partir des guides Shadowstep TBC. <a href="https://www.icy-veins.com/tbc-classic/subtlety-rogue-pvp-guide" target="_blank" rel="noopener">Guide Icy Veins</a> · <a href="https://www.warcrafttavern.com/tbc/guides/rogue-shadowstep-pvp/" target="_blank" rel="noopener">Guide Warcraft Tavern</a>.</p><p class="small">La progression est synchronisée automatiquement avec Supabase et une copie locale est conservée dans le navigateur.</p></details></section><footer>Rogue Moonwell · Site personnel indépendant, non affilié à Blizzard ni à Moonwell.</footer></main>
 <script>
 const steps=[
 [10,14,'Finesse','Master of Deception','5/5','Furtivité renforcée'],
@@ -34,24 +38,175 @@ const steps=[
 [62,66,'Assassinat','Lethality','5/5','Dégâts critiques des attaques concernées'],
 [67,70,'Assassinat','Vile Poisons','4/5','Améliore tes poisons']
 ];
-const $=id=>document.getElementById(id);const key='moonwell-rogue-tracker-v1';let state={level:14,checked:[]};let config={url:'',key:'',slug:'mon-rogue-moonwell'};let session=null;
-try{state={...state,...JSON.parse(localStorage.getItem(key)||'{}')};config={...config,...JSON.parse(localStorage.getItem(key+'-config')||'{}')}}catch{}
-function save(){localStorage.setItem(key,JSON.stringify(state));$('localStatus').textContent='✓ Progression sauvegardée dans ce navigateur.';renderStats()}
-function renderStats(){let total=state.checked.reduce((n,i)=>n+(steps[i][1]-steps[i][0]+1),0);let available=Math.max(0,state.level-9);$('statLevel').textContent=state.level;$('statPoints').textContent=`${total}/${available}`;$('statTotal').textContent=total+'/61';$('barFill').style.width=(total/61*100)+'%';let next=[30,31,40,50].find(n=>n>state.level);$('nextGoal').textContent=next?('Prochain grand palier : niveau '+next+' · '+({30:'Hémorragie',31:'Préparation',40:'Préméditation',50:'Pas de l’ombre'}[next])):'Objectif final : niveau 70 et 20/0/41';$('validation').textContent=total>available?'⚠️ Plus de points cochés que de points disponibles à ton niveau. Vérifie tes cases.':total<available?`Il te reste ${available-total} point(s) à confirmer dans ton suivi.`:'✓ Tous tes points disponibles sont cochés.';document.querySelectorAll('.step').forEach((el,i)=>{el.classList.toggle('done',state.checked.includes(i));el.classList.toggle('locked',steps[i][0]>state.level)})}
-function renderSteps(){let root=$('steps');root.innerHTML='';steps.forEach((s,i)=>{if(i===0||s[2]!==steps[i-1][2]){let h=document.createElement('h3');h.className='category';h.textContent=s[2]==='Finesse'?'Finesse · 41 points (niveaux 10 à 50)':'Assassinat · 20 points (niveaux 51 à 70)';root.append(h)}let el=document.createElement('div');el.className='step';let top=document.createElement('div');top.className='step-top';let check=document.createElement('input');check.type='checkbox';check.checked=state.checked.includes(i);check.setAttribute('aria-label',s[3]+' '+s[4]);check.onchange=()=>{state.checked=check.checked?[...new Set([...state.checked,i])]:state.checked.filter(x=>x!==i);save()};let main=document.createElement('div');main.className='step-main';let title=document.createElement('div');title.className='step-title';title.textContent=s[3]+' · '+s[4];let meta=document.createElement('div');meta.className='step-meta';meta.textContent='Niveau '+(s[0]===s[1]?s[0]:s[0]+'–'+s[1]);main.append(title,meta);top.append(check,main);let desc=document.createElement('p');desc.className='step-desc';desc.textContent=s[5];el.append(top,desc);root.append(el)});renderStats()}
-$('level').value=state.level;$('level').onchange=()=>{state.level=Math.max(10,Math.min(70,Number($('level').value)||14));$('level').value=state.level;save()};$('saveLocal').onclick=save;$('reset').onclick=()=>{if(confirm('Décocher toutes les étapes ?')){state.checked=[];renderSteps();save()}};
-function renderConfig(){$('projectUrl').value=config.url;$('anonKey').value=config.key;$('slug').value=config.slug;let link=location.origin+location.pathname+'?rogue='+encodeURIComponent(config.slug);$('publicLink').href=link;$('publicLink').textContent=link;$('jsonLink').textContent=config.url?'API publique lisible par ChatGPT : '+config.url+'/rest/v1/rogue_progress?slug=eq.'+encodeURIComponent(config.slug)+'&select=slug,level,checked,updated_at':''}
-function getConfig(){let url=$('projectUrl').value.trim().replace(/\/$/,'');if(url&&!/^https:\/\/[\w.-]+\.supabase\.co$/.test(url))throw Error('URL Supabase invalide');let key=$('anonKey').value.trim();if(/service_role|sb_secret_/i.test(key))throw Error('Ne colle jamais une clé secrète ici.');let slug=$('slug').value.trim().toLowerCase();if(!/^[a-z0-9-]{3,60}$/.test(slug))throw Error('Identifiant public : 3 à 60 caractères, lettres/chiffres/tirets.');return {url,key,slug}}
-function cloudHeaders(auth=false){return {'apikey':config.key,'Authorization':'Bearer '+(auth&&session?.access_token?session.access_token:config.key),'Content-Type':'application/json'}}
-function ready(){if(!config.url||!config.key)throw Error('Configure d’abord l’URL et la clé publique de Supabase.')}
-async function readCloud(){ready();let r=await fetch(config.url+'/rest/v1/rogue_progress?slug=eq.'+encodeURIComponent(config.slug)+'&select=slug,level,checked,updated_at',{headers:cloudHeaders()});if(!r.ok)throw Error('Lecture impossible : '+r.status+' '+(await r.text()).slice(0,200));let rows=await r.json();if(!rows.length)throw Error('Aucune progression publiée pour cet identifiant. Connecte-toi puis synchronise une première fois.');let row=rows[0];state={level:row.level,checked:(Array.isArray(row.checked)?row.checked:[]).filter(i=>Number.isInteger(i)&&i>=0&&i<steps.length)};$('level').value=state.level;renderSteps();save();$('cloudStatus').textContent='✓ Progression récupérée en ligne (mise à jour '+row.updated_at+').'}
-$('saveConfig').onclick=()=>{try{config=getConfig();localStorage.setItem(key+'-config',JSON.stringify(config));renderConfig();$('cloudStatus').textContent='✓ Configuration enregistrée localement.'}catch(e){$('cloudStatus').textContent=e.message}};
-$('loadCloud').onclick=async()=>{try{await readCloud()}catch(e){$('cloudStatus').textContent='⚠️ '+e.message}};
-function callbackUrl(){return location.origin+location.pathname+'?rogue='+encodeURIComponent(config.slug)}
-async function authRequest(endpoint,body){ready();let r=await fetch(config.url+'/auth/v1/'+endpoint,{method:'POST',headers:cloudHeaders(),body:JSON.stringify(body)});if(!r.ok)throw Error((await r.text()).slice(0,300));return r.json()}
-$('sendMagic').onclick=async()=>{try{config=getConfig();localStorage.setItem(key+'-config',JSON.stringify(config));let email=$('email').value.trim();if(!email)throw Error('Saisis ton email.');await authRequest('otp',{email,create_user:true,gotrue_meta_security:{},email_redirect_to:callbackUrl()});$('cloudStatus').textContent='✓ Vérifie ta boîte mail : un lien de connexion vient d’être demandé.'}catch(e){$('cloudStatus').textContent='⚠️ '+e.message}};
-async function recoverSession(){let hash=new URLSearchParams(location.hash.slice(1));let access=hash.get('access_token'),refresh=hash.get('refresh_token');if(access){session={access_token:access,refresh_token:refresh};sessionStorage.setItem(key+'-session',JSON.stringify(session));history.replaceState(null,'',location.pathname+location.search)}else{try{session=JSON.parse(sessionStorage.getItem(key+'-session')||'null')}catch{}}if(session?.access_token){try{let r=await fetch(config.url+'/auth/v1/user',{headers:cloudHeaders(true)});if(!r.ok){session=null;sessionStorage.removeItem(key+'-session')}else{$('cloudStatus').textContent='✓ Connecté : tu peux synchroniser ta progression.'}}catch{}}}
-$('cloudSave').onclick=async()=>{try{ready();if(!session?.access_token)throw Error('Connecte-toi avec le lien reçu par email.');let user=await fetch(config.url+'/auth/v1/user',{headers:cloudHeaders(true)});if(!user.ok)throw Error('Session expirée. Reconnecte-toi.');let uid=(await user.json()).id;let r=await fetch(config.url+'/rest/v1/rogue_progress?on_conflict=slug',{method:'POST',headers:{...cloudHeaders(true),'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify({slug:config.slug,owner_id:uid,level:state.level,checked:state.checked,updated_at:new Date().toISOString()})});if(!r.ok)throw Error('Écriture refusée : '+r.status+' '+(await r.text()).slice(0,220));$('cloudStatus').textContent='✓ Progression synchronisée sur Supabase !'}catch(e){$('cloudStatus').textContent='⚠️ '+e.message}};
-$('signOut').onclick=()=>{session=null;sessionStorage.removeItem(key+'-session');$('cloudStatus').textContent='Déconnecté de cette page.'};
-renderSteps();let shared=new URLSearchParams(location.search).get('rogue');if(shared&&/^[a-z0-9-]{3,60}$/.test(shared))config.slug=shared;renderConfig();recoverSession();
+const $=id=>document.getElementById(id);
+const key='moonwell-rogue-tracker-v2';
+const SUPABASE_URL='https://rcefxsqrstamkfbzelyx.supabase.co';
+const SUPABASE_KEY='sb_publishable_J1t5Mv-ouW4wHDD4Q9v2lw_scSVv8Sr';
+const SLUG='fandebr';
+let state={level:14,checked:[]};
+
+try{
+  const local=JSON.parse(localStorage.getItem(key)||'{}');
+  state={...state,...local};
+}catch{}
+
+function cloudHeaders(){
+  return {
+    'apikey':SUPABASE_KEY,
+    'Authorization':'Bearer '+SUPABASE_KEY,
+    'Content-Type':'application/json'
+  };
+}
+
+let saveTimer=null;
+function save(){
+  localStorage.setItem(key,JSON.stringify(state));
+  $('localStatus').textContent='✓ Progression sauvegardée localement.';
+  renderStats();
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveCloud,250);
+}
+
+async function saveCloud(){
+  try{
+    $('cloudStatus').textContent='☁️ Sauvegarde…';
+    const r=await fetch(
+      SUPABASE_URL+'/rest/v1/rogue_progress?on_conflict=slug',
+      {
+        method:'POST',
+        headers:{
+          ...cloudHeaders(),
+          'Prefer':'resolution=merge-duplicates,return=minimal'
+        },
+        body:JSON.stringify({
+          slug:SLUG,
+          owner_id:null,
+          level:state.level,
+          checked:state.checked,
+          updated_at:new Date().toISOString()
+        })
+      }
+    );
+    if(!r.ok) throw Error(r.status+' '+(await r.text()).slice(0,250));
+    $('cloudStatus').textContent='✓ Progression synchronisée automatiquement.';
+  }catch(e){
+    console.error(e);
+    $('cloudStatus').textContent='⚠️ Synchronisation impossible. La sauvegarde locale reste active.';
+  }
+}
+
+async function readCloud(){
+  try{
+    $('cloudStatus').textContent='☁️ Chargement de Fandebr…';
+    const r=await fetch(
+      SUPABASE_URL+'/rest/v1/rogue_progress?slug=eq.'+encodeURIComponent(SLUG)+'&select=slug,level,checked,updated_at',
+      {headers:cloudHeaders()}
+    );
+    if(!r.ok) throw Error(r.status+' '+(await r.text()).slice(0,250));
+    const rows=await r.json();
+
+    if(rows.length){
+      const row=rows[0];
+      state={
+        level:Math.max(10,Math.min(70,Number(row.level)||14)),
+        checked:(Array.isArray(row.checked)?row.checked:[]).filter(i=>Number.isInteger(i)&&i>=0&&i<steps.length)
+      };
+      localStorage.setItem(key,JSON.stringify(state));
+      $('level').value=state.level;
+      renderSteps();
+      $('cloudStatus').textContent='✓ Progression en ligne chargée.';
+    }else{
+      $('cloudStatus').textContent='☁️ Première sauvegarde de Fandebr…';
+      await saveCloud();
+    }
+  }catch(e){
+    console.error(e);
+    $('cloudStatus').textContent='⚠️ Cloud indisponible. Utilisation de la sauvegarde locale.';
+  }
+}
+
+function renderStats(){
+  let total=state.checked.reduce((n,i)=>n+(steps[i][1]-steps[i][0]+1),0);
+  let available=Math.max(0,state.level-9);
+  $('statLevel').textContent=state.level;
+  $('statPoints').textContent=`${total}/${available}`;
+  $('statTotal').textContent=total+'/61';
+  $('barFill').style.width=(total/61*100)+'%';
+  let next=[30,31,40,50].find(n=>n>state.level);
+  $('nextGoal').textContent=next
+    ?('Prochain grand palier : niveau '+next+' · '+({30:'Hémorragie',31:'Préparation',40:'Préméditation',50:'Pas de l’ombre'}[next]))
+    :'Objectif final : niveau 70 et 20/0/41';
+  $('validation').textContent=total>available
+    ?'⚠️ Plus de points cochés que de points disponibles à ton niveau. Vérifie tes cases.'
+    :total<available
+      ?`Il te reste ${available-total} point(s) à confirmer dans ton suivi.`
+      :'✓ Tous tes points disponibles sont cochés.';
+  document.querySelectorAll('.step').forEach((el,i)=>{
+    el.classList.toggle('done',state.checked.includes(i));
+    el.classList.toggle('locked',steps[i][0]>state.level);
+  });
+}
+
+function renderSteps(){
+  let root=$('steps');
+  root.innerHTML='';
+  steps.forEach((s,i)=>{
+    if(i===0||s[2]!==steps[i-1][2]){
+      let h=document.createElement('h3');
+      h.className='category';
+      h.textContent=s[2]==='Finesse'
+        ?'Finesse · 41 points (niveaux 10 à 50)'
+        :'Assassinat · 20 points (niveaux 51 à 70)';
+      root.append(h);
+    }
+    let el=document.createElement('div');
+    el.className='step';
+    let top=document.createElement('div');
+    top.className='step-top';
+    let check=document.createElement('input');
+    check.type='checkbox';
+    check.checked=state.checked.includes(i);
+    check.setAttribute('aria-label',s[3]+' '+s[4]);
+    check.onchange=()=>{
+      state.checked=check.checked
+        ?[...new Set([...state.checked,i])]
+        :state.checked.filter(x=>x!==i);
+      save();
+    };
+    let main=document.createElement('div');
+    main.className='step-main';
+    let title=document.createElement('div');
+    title.className='step-title';
+    title.textContent=s[3]+' · '+s[4];
+    let meta=document.createElement('div');
+    meta.className='step-meta';
+    meta.textContent='Niveau '+(s[0]===s[1]?s[0]:s[0]+'–'+s[1]);
+    main.append(title,meta);
+    top.append(check,main);
+    let desc=document.createElement('p');
+    desc.className='step-desc';
+    desc.textContent=s[5];
+    el.append(top,desc);
+    root.append(el);
+  });
+  renderStats();
+}
+
+$('level').value=state.level;
+$('level').onchange=()=>{
+  state.level=Math.max(10,Math.min(70,Number($('level').value)||14));
+  $('level').value=state.level;
+  save();
+};
+$('saveLocal').onclick=save;
+$('reset').onclick=()=>{
+  if(confirm('Décocher toutes les étapes ?')){
+    state.checked=[];
+    renderSteps();
+    save();
+  }
+};
+
+renderSteps();
+readCloud();
 </script></body></html>
