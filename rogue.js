@@ -1,0 +1,31 @@
+const steps=[
+[10,14,'Finesse','Master of Deception','5/5','Furtivité renforcée'],
+[15,16,'Finesse','Dirty Tricks','2/2','Sap et Blind plus faciles à utiliser'],
+[17,20,'Finesse','Camouflage','4/5','Objectif du build : 4 points sur 5 possibles (4/5)'],
+[21,23,'Finesse','Initiative','3/3','Points de combo lors des ouvertures'],
+[24,24,'Finesse','Ghostly Strike','1/1','Attaque et esquive temporaire'],
+[25,26,'Finesse','Elusiveness','2/2','Réduction des temps de recharge défensifs'],
+[27,29,'Finesse','Serrated Blades','3/3','Pénétration d’armure, prérequis Hémorragie'],
+[30,30,'Finesse','Hemorrhage','1/1','Générateur de points de combo'],
+[31,31,'Finesse','Preparation','1/1','Réinitialisation de plusieurs capacités'],
+[32,33,'Finesse','Heightened Senses','2/2','Détection accrue des furtifs'],
+[34,34,'Finesse','Dirty Deeds','1/2','Ouvertures moins coûteuses'],
+[35,39,'Finesse','Deadliness','5/5','Puissance d’attaque'],
+[40,40,'Finesse','Premeditation','1/1','Deux points de combo à l’ouverture'],
+[41,43,'Finesse','Cheat Death','3/3','Protection contre les dégâts mortels'],
+[44,44,'Finesse','Dirty Deeds (2e point)','1/1','Passer Dirty Deeds de 1/2 à 2/2'],
+[45,49,'Finesse','Sinister Calling','5/5','Agilité et dégâts'],
+[50,50,'Finesse','Shadowstep','1/1','Mobilité et engagement PvP'],
+[51,55,'Assassinat','Malice','5/5','Coups critiques'],
+[56,58,'Assassinat','Ruthlessness','3/3','Points de combo après un coup de grâce'],
+[59,60,'Assassinat','Murder','2/2','Dégâts contre certaines créatures'],
+[61,61,'Assassinat','Relentless Strikes','1/1','Énergie après un coup de grâce'],
+[62,66,'Assassinat','Lethality','5/5','Dégâts critiques des attaques concernées'],
+[67,70,'Assassinat','Vile Poisons','4/5','Objectif du build : 4 points sur 5 possibles (4/5)']
+];
+const trackerConfig={
+  slug:'fandebr', name:'Fandebr', key:'moonwell-rogue-tracker-v3', defaultLevel:14,
+  build:'20/0/41', steps,
+  milestones:{30:'Hémorragie',31:'Préparation',40:'Préméditation',50:'Pas de l’ombre'},
+  categories:{Finesse:'Finesse · 41 points (niveaux 10 à 50)',Assassinat:'Assassinat · 20 points (niveaux 51 à 70)'}
+};

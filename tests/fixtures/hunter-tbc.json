@@ -1,0 +1,369 @@
+{
+  "source": "https://github.com/Vampyr7878/WoW-Talent-Caluclator-TBC/blob/master/WoW%20Talent%20Calculator%20TBC/Data/Hunter.xml",
+  "talents": {
+    "Improved Aspect of the Hawk": {
+      "tree": "Beast Mastery",
+      "tier": 1,
+      "max": 5
+    },
+    "Endurance Training": {
+      "tree": "Beast Mastery",
+      "tier": 1,
+      "max": 5
+    },
+    "Focused Fire": {
+      "tree": "Beast Mastery",
+      "tier": 2,
+      "max": 2
+    },
+    "Improved Aspect of the Monkey": {
+      "tree": "Beast Mastery",
+      "tier": 2,
+      "max": 3
+    },
+    "Thick Hide": {
+      "tree": "Beast Mastery",
+      "tier": 2,
+      "max": 3
+    },
+    "Improved Revive Pet": {
+      "tree": "Beast Mastery",
+      "tier": 2,
+      "max": 2
+    },
+    "Pathfinding": {
+      "tree": "Beast Mastery",
+      "tier": 3,
+      "max": 2
+    },
+    "Bestial Swiftness": {
+      "tree": "Beast Mastery",
+      "tier": 3,
+      "max": 1
+    },
+    "Unleashed Fury": {
+      "tree": "Beast Mastery",
+      "tier": 3,
+      "max": 5
+    },
+    "Improved Mend Pet": {
+      "tree": "Beast Mastery",
+      "tier": 4,
+      "max": 2
+    },
+    "Ferocity": {
+      "tree": "Beast Mastery",
+      "tier": 4,
+      "max": 5
+    },
+    "Spirit Bond": {
+      "tree": "Beast Mastery",
+      "tier": 5,
+      "max": 2
+    },
+    "Intimidation": {
+      "tree": "Beast Mastery",
+      "tier": 5,
+      "max": 1
+    },
+    "Bestial Discipline": {
+      "tree": "Beast Mastery",
+      "tier": 5,
+      "max": 2
+    },
+    "Animal Handler": {
+      "tree": "Beast Mastery",
+      "tier": 6,
+      "max": 2
+    },
+    "Frenzy": {
+      "tree": "Beast Mastery",
+      "tier": 6,
+      "max": 5,
+      "requires": [
+        "Ferocity",
+        5
+      ]
+    },
+    "Ferocious Inspiration": {
+      "tree": "Beast Mastery",
+      "tier": 7,
+      "max": 3
+    },
+    "Bestial Wrath": {
+      "tree": "Beast Mastery",
+      "tier": 7,
+      "max": 1,
+      "requires": [
+        "Intimidation",
+        1
+      ]
+    },
+    "Catlike Reflexes": {
+      "tree": "Beast Mastery",
+      "tier": 7,
+      "max": 3
+    },
+    "Serpent's Swiftness": {
+      "tree": "Beast Mastery",
+      "tier": 8,
+      "max": 5
+    },
+    "The Beast Within": {
+      "tree": "Beast Mastery",
+      "tier": 9,
+      "max": 1,
+      "requires": [
+        "Bestial Wrath",
+        1
+      ]
+    },
+    "Improved Concussive Shot": {
+      "tree": "Marksmanship",
+      "tier": 1,
+      "max": 5
+    },
+    "Lethal Shots": {
+      "tree": "Marksmanship",
+      "tier": 1,
+      "max": 5
+    },
+    "Improved Hunter's Mark": {
+      "tree": "Marksmanship",
+      "tier": 2,
+      "max": 5
+    },
+    "Efficiency": {
+      "tree": "Marksmanship",
+      "tier": 2,
+      "max": 5
+    },
+    "Go for the Throat": {
+      "tree": "Marksmanship",
+      "tier": 3,
+      "max": 2
+    },
+    "Improved Arcane Shot": {
+      "tree": "Marksmanship",
+      "tier": 3,
+      "max": 5
+    },
+    "Aimed Shot": {
+      "tree": "Marksmanship",
+      "tier": 3,
+      "max": 1
+    },
+    "Rapid Killing": {
+      "tree": "Marksmanship",
+      "tier": 3,
+      "max": 2
+    },
+    "Improved Stings": {
+      "tree": "Marksmanship",
+      "tier": 4,
+      "max": 5
+    },
+    "Mortal Shots": {
+      "tree": "Marksmanship",
+      "tier": 4,
+      "max": 5,
+      "requires": [
+        "Aimed Shot",
+        1
+      ]
+    },
+    "Concussive Barrage": {
+      "tree": "Marksmanship",
+      "tier": 5,
+      "max": 3
+    },
+    "Scatter Shot": {
+      "tree": "Marksmanship",
+      "tier": 5,
+      "max": 1
+    },
+    "Barrage": {
+      "tree": "Marksmanship",
+      "tier": 5,
+      "max": 3
+    },
+    "Combat Experience": {
+      "tree": "Marksmanship",
+      "tier": 6,
+      "max": 2
+    },
+    "Ranged Weapon Specialization": {
+      "tree": "Marksmanship",
+      "tier": 6,
+      "max": 5
+    },
+    "Careful Aim": {
+      "tree": "Marksmanship",
+      "tier": 7,
+      "max": 3
+    },
+    "Trueshot Aura": {
+      "tree": "Marksmanship",
+      "tier": 7,
+      "max": 1,
+      "requires": [
+        "Scatter Shot",
+        1
+      ]
+    },
+    "Improved Barrage": {
+      "tree": "Marksmanship",
+      "tier": 7,
+      "max": 3,
+      "requires": [
+        "Barrage",
+        3
+      ]
+    },
+    "Master Marksman": {
+      "tree": "Marksmanship",
+      "tier": 8,
+      "max": 5
+    },
+    "Silencing Shot": {
+      "tree": "Marksmanship",
+      "tier": 9,
+      "max": 1,
+      "requires": [
+        "Master Marksman",
+        5
+      ]
+    },
+    "Monster Slaying": {
+      "tree": "Survival",
+      "tier": 1,
+      "max": 3
+    },
+    "Humanoid Slaying": {
+      "tree": "Survival",
+      "tier": 1,
+      "max": 3
+    },
+    "Hawk Eye": {
+      "tree": "Survival",
+      "tier": 1,
+      "max": 3
+    },
+    "Savage Strikes": {
+      "tree": "Survival",
+      "tier": 1,
+      "max": 2
+    },
+    "Entrapment": {
+      "tree": "Survival",
+      "tier": 2,
+      "max": 3
+    },
+    "Deflection": {
+      "tree": "Survival",
+      "tier": 2,
+      "max": 5
+    },
+    "Improved Wing Clip": {
+      "tree": "Survival",
+      "tier": 2,
+      "max": 3
+    },
+    "Clever Traps": {
+      "tree": "Survival",
+      "tier": 3,
+      "max": 2
+    },
+    "Survivalist": {
+      "tree": "Survival",
+      "tier": 3,
+      "max": 5
+    },
+    "Deterrence": {
+      "tree": "Survival",
+      "tier": 3,
+      "max": 1
+    },
+    "Trap Mastery": {
+      "tree": "Survival",
+      "tier": 4,
+      "max": 2
+    },
+    "Surefooted": {
+      "tree": "Survival",
+      "tier": 4,
+      "max": 3
+    },
+    "Improved Feign Death": {
+      "tree": "Survival",
+      "tier": 4,
+      "max": 2
+    },
+    "Survival Instincts": {
+      "tree": "Survival",
+      "tier": 5,
+      "max": 2
+    },
+    "Killer Instinct": {
+      "tree": "Survival",
+      "tier": 5,
+      "max": 3
+    },
+    "Counterattack": {
+      "tree": "Survival",
+      "tier": 5,
+      "max": 1,
+      "requires": [
+        "Deterrence",
+        1
+      ]
+    },
+    "Resourcefulness": {
+      "tree": "Survival",
+      "tier": 6,
+      "max": 3
+    },
+    "Lightning Reflexes": {
+      "tree": "Survival",
+      "tier": 6,
+      "max": 5
+    },
+    "Thrill of the Hunt": {
+      "tree": "Survival",
+      "tier": 7,
+      "max": 3
+    },
+    "Wyvern Sting": {
+      "tree": "Survival",
+      "tier": 7,
+      "max": 1,
+      "requires": [
+        "Killer Instinct",
+        3
+      ]
+    },
+    "Expose Weakness": {
+      "tree": "Survival",
+      "tier": 7,
+      "max": 3,
+      "requires": [
+        "Lightning Reflexes",
+        5
+      ]
+    },
+    "Master Tactician": {
+      "tree": "Survival",
+      "tier": 8,
+      "max": 4
+    },
+    "Readiness": {
+      "tree": "Survival",
+      "tier": 9,
+      "max": 1,
+      "requires": [
+        "Master Tactician",
+        5
+      ]
+    }
+  }
+}
