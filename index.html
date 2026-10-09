@@ -5,7 +5,7 @@
 </style></head><body><main>
 <header><div class="eyebrow">Moonwell x5 · World of Warcraft TBC 2.4.3</div><div class="row"><h1>🗡️ Rogue Tracker</h1><span class="pill">PvP sauvage · Alliance</span></div><p class="intro">Build Finesse / Shadowstep <b>20 / 0 / 41</b>. Suis ton niveau, coche tes talents et synchronise ta progression pour pouvoir la consulter depuis n'importe quel appareil.</p></header>
 <section><div class="row"><h2>Progression</h2><div class="controls"><div><label for="level">Niveau actuel</label><input id="level" type="number" min="10" max="70" value="14"></div><button id="saveLocal">Enregistrer</button></div></div><div class="stats"><div class="stat"><strong id="statLevel">14</strong><span>Niveau</span></div><div class="stat"><strong id="statPoints">0/5</strong><span>Points cochés / disponibles</span></div><div class="stat"><strong id="statTotal">0/61</strong><span>Build terminé</span></div></div><div class="bar"><div class="fill" id="barFill"></div></div><p class="milestone" id="nextGoal"></p><p class="small" id="validation"></p><div class="status" id="localStatus"></div></section>
-<section><div class="row"><h2>Liste des talents niveau par niveau</h2><button class="secondary" id="reset">Tout décocher</button></div><p class="small">Coche chaque point réellement attribué dans le jeu. Un talent 5/5 possède 5 cases, un talent 3/3 en possède 3, etc. Les rangs sont toujours cochés dans l’ordre.</p><div id="steps"></div></section>
+<section><div class="row"><h2>Liste des talents niveau par niveau</h2><button class="secondary" id="reset">Tout décocher</button></div><p class="small">Coche chaque point réellement attribué dans le jeu. Chaque étape propose exactement le nombre de points prévu dans le build : Camouflage 4 cases (4/5), Vile Poisons 4 cases (4/5). Les rangs sont cochés dans l’ordre.</p><div id="steps"></div></section>
 <section><h2>☁️ Synchronisation en ligne</h2>
 <p class="intro">La progression de <b>Fandebr</b> est chargée depuis Supabase à l’ouverture et sauvegardée automatiquement dès que tu modifies ton niveau ou coches/décoches un talent.</p>
 <p id="cloudStatus" class="status">Connexion au cloud…</p>
@@ -16,7 +16,7 @@
 const steps=[
 [10,14,'Finesse','Master of Deception','5/5','Furtivité renforcée'],
 [15,16,'Finesse','Dirty Tricks','2/2','Sap et Blind plus faciles à utiliser'],
-[17,20,'Finesse','Camouflage','4/5','Vitesse en furtivité'],
+[17,20,'Finesse','Camouflage','4/5','Objectif du build : 4 points sur 5 possibles (4/5)'],
 [21,23,'Finesse','Initiative','3/3','Points de combo lors des ouvertures'],
 [24,24,'Finesse','Ghostly Strike','1/1','Attaque et esquive temporaire'],
 [25,26,'Finesse','Elusiveness','2/2','Réduction des temps de recharge défensifs'],
@@ -28,7 +28,7 @@ const steps=[
 [35,39,'Finesse','Deadliness','5/5','Puissance d’attaque'],
 [40,40,'Finesse','Premeditation','1/1','Deux points de combo à l’ouverture'],
 [41,43,'Finesse','Cheat Death','3/3','Protection contre les dégâts mortels'],
-[44,44,'Finesse','Dirty Deeds','2/2','Terminer le talent'],
+[44,44,'Finesse','Dirty Deeds (2e point)','1/1','Passer Dirty Deeds de 1/2 à 2/2'],
 [45,49,'Finesse','Sinister Calling','5/5','Agilité et dégâts'],
 [50,50,'Finesse','Shadowstep','1/1','Mobilité et engagement PvP'],
 [51,55,'Assassinat','Malice','5/5','Coups critiques'],
@@ -36,7 +36,7 @@ const steps=[
 [59,60,'Assassinat','Murder','2/2','Dégâts contre certaines créatures'],
 [61,61,'Assassinat','Relentless Strikes','1/1','Énergie après un coup de grâce'],
 [62,66,'Assassinat','Lethality','5/5','Dégâts critiques des attaques concernées'],
-[67,70,'Assassinat','Vile Poisons','4/5','Améliore tes poisons']
+[67,70,'Assassinat','Vile Poisons','4/5','Objectif du build : 4 points sur 5 possibles (4/5)']
 ];
 const $=id=>document.getElementById(id);
 const key='moonwell-rogue-tracker-v3';
@@ -48,8 +48,8 @@ const SLUG='fandebr';
 let state={level:14,points:Array(steps.length).fill(0)};
 
 function maxPoints(i){
-  const rank=steps[i][4]; // e.g. "5/5"
-  const n=Number(String(rank).split('/')[1]);
+  const rank=steps[i][4]; // points prévus / rangs possibles, ex. 4/5
+  const n=Number(String(rank).split('/')[0]);
   return Number.isFinite(n) && n>0 ? n : 1;
 }
 
