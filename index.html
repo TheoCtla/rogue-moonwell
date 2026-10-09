@@ -5,7 +5,7 @@
 </style></head><body><main>
 <header><div class="eyebrow">Moonwell x5 · World of Warcraft TBC 2.4.3</div><div class="row"><h1>🗡️ Rogue Tracker</h1><span class="pill">PvP sauvage · Alliance</span></div><p class="intro">Build Finesse / Shadowstep <b>20 / 0 / 41</b>. Suis ton niveau, coche tes talents et synchronise ta progression pour pouvoir la consulter depuis n'importe quel appareil.</p></header>
 <section><div class="row"><h2>Progression</h2><div class="controls"><div><label for="level">Niveau actuel</label><input id="level" type="number" min="10" max="70" value="14"></div><button id="saveLocal">Enregistrer</button></div></div><div class="stats"><div class="stat"><strong id="statLevel">14</strong><span>Niveau</span></div><div class="stat"><strong id="statPoints">0/5</strong><span>Points cochés / disponibles</span></div><div class="stat"><strong id="statTotal">0/61</strong><span>Build terminé</span></div></div><div class="bar"><div class="fill" id="barFill"></div></div><p class="milestone" id="nextGoal"></p><p class="small" id="validation"></p><div class="status" id="localStatus"></div></section>
-<section><div class="row"><h2>Liste des talents niveau par niveau</h2><button class="secondary" id="reset">Tout décocher</button></div><p class="small">Coche chaque étape une fois ses points réellement attribués dans le jeu. Les étapes futures restent visibles : leurs cases ne sont pas bloquées pour te permettre de rattraper ton suivi.</p><div id="steps"></div></section>
+<section><div class="row"><h2>Liste des talents niveau par niveau</h2><button class="secondary" id="reset">Tout décocher</button></div><p class="small">Coche chaque point réellement attribué dans le jeu. Un talent 5/5 possède 5 cases, un talent 3/3 en possède 3, etc. Les rangs sont toujours cochés dans l’ordre.</p><div id="steps"></div></section>
 <section><h2>☁️ Synchronisation en ligne</h2>
 <p class="intro">La progression de <b>Fandebr</b> est chargée depuis Supabase à l’ouverture et sauvegardée automatiquement dès que tu modifies ton niveau ou coches/décoches un talent.</p>
 <p id="cloudStatus" class="status">Connexion au cloud…</p>
@@ -39,15 +39,38 @@ const steps=[
 [67,70,'Assassinat','Vile Poisons','4/5','Améliore tes poisons']
 ];
 const $=id=>document.getElementById(id);
-const key='moonwell-rogue-tracker-v2';
+const key='moonwell-rogue-tracker-v3';
 const SUPABASE_URL='https://rcefxsqrstamkfbzelyx.supabase.co';
 const SUPABASE_KEY='sb_publishable_J1t5Mv-ouW4wHDD4Q9v2lw_scSVv8Sr';
 const SLUG='fandebr';
-let state={level:14,checked:[]};
+
+// points[i] = number of points currently invested in talent i.
+let state={level:14,points:Array(steps.length).fill(0)};
+
+function maxPoints(i){
+  const rank=steps[i][4]; // e.g. "5/5"
+  const n=Number(String(rank).split('/')[1]);
+  return Number.isFinite(n) && n>0 ? n : 1;
+}
+
+function normalizeState(raw){
+  const level=Math.max(10,Math.min(70,Number(raw?.level)||14));
+  let points=Array(steps.length).fill(0);
+
+  if(Array.isArray(raw?.points)){
+    points=points.map((_,i)=>Math.max(0,Math.min(maxPoints(i),Number(raw.points[i])||0)));
+  }else if(Array.isArray(raw?.checked)){
+    // Migration from old tracker: a checked talent becomes fully invested.
+    raw.checked.forEach(i=>{
+      if(Number.isInteger(i) && i>=0 && i<steps.length) points[i]=maxPoints(i);
+    });
+  }
+  return {level,points};
+}
 
 try{
-  const local=JSON.parse(localStorage.getItem(key)||'{}');
-  state={...state,...local};
+  const local=JSON.parse(localStorage.getItem(key)||'null');
+  if(local) state=normalizeState(local);
 }catch{}
 
 function cloudHeaders(){
@@ -70,6 +93,9 @@ function save(){
 async function saveCloud(){
   try{
     $('cloudStatus').textContent='☁️ Sauvegarde…';
+
+    // Store the exact point allocation in checked as a compact array:
+    // [3,0,1,...]. This avoids a DB schema change while making every point precise.
     const r=await fetch(
       SUPABASE_URL+'/rest/v1/rogue_progress?on_conflict=slug',
       {
@@ -82,11 +108,12 @@ async function saveCloud(){
           slug:SLUG,
           owner_id:null,
           level:state.level,
-          checked:state.checked,
+          checked:state.points,
           updated_at:new Date().toISOString()
         })
       }
     );
+
     if(!r.ok) throw Error(r.status+' '+(await r.text()).slice(0,250));
     $('cloudStatus').textContent='✓ Progression synchronisée automatiquement.';
   }catch(e){
@@ -102,15 +129,25 @@ async function readCloud(){
       SUPABASE_URL+'/rest/v1/rogue_progress?slug=eq.'+encodeURIComponent(SLUG)+'&select=slug,level,checked,updated_at',
       {headers:cloudHeaders()}
     );
+
     if(!r.ok) throw Error(r.status+' '+(await r.text()).slice(0,250));
     const rows=await r.json();
 
     if(rows.length){
       const row=rows[0];
-      state={
-        level:Math.max(10,Math.min(70,Number(row.level)||14)),
-        checked:(Array.isArray(row.checked)?row.checked:[]).filter(i=>Number.isInteger(i)&&i>=0&&i<steps.length)
-      };
+      const cloudChecked=Array.isArray(row.checked)?row.checked:[];
+
+      // Backwards compatibility:
+      // Old format contained talent indexes, e.g. [0,1].
+      // New format contains one point count per talent, e.g. [5,2,0,...].
+      let migrated;
+      if(cloudChecked.length===steps.length){
+        migrated={level:row.level,points:cloudChecked};
+      }else{
+        migrated={level:row.level,checked:cloudChecked};
+      }
+
+      state=normalizeState(migrated);
       localStorage.setItem(key,JSON.stringify(state));
       $('level').value=state.level;
       renderSteps();
@@ -125,70 +162,125 @@ async function readCloud(){
   }
 }
 
+function totalPoints(){
+  return state.points.reduce((a,b)=>a+b,0);
+}
+
 function renderStats(){
-  let total=state.checked.reduce((n,i)=>n+(steps[i][1]-steps[i][0]+1),0);
-  let available=Math.max(0,state.level-9);
+  const total=totalPoints();
+  const available=Math.max(0,state.level-9);
+
   $('statLevel').textContent=state.level;
   $('statPoints').textContent=`${total}/${available}`;
   $('statTotal').textContent=total+'/61';
-  $('barFill').style.width=(total/61*100)+'%';
-  let next=[30,31,40,50].find(n=>n>state.level);
+  $('barFill').style.width=(Math.min(61,total)/61*100)+'%';
+
+  const next=[30,31,40,50].find(n=>n>state.level);
   $('nextGoal').textContent=next
     ?('Prochain grand palier : niveau '+next+' · '+({30:'Hémorragie',31:'Préparation',40:'Préméditation',50:'Pas de l’ombre'}[next]))
     :'Objectif final : niveau 70 et 20/0/41';
+
   $('validation').textContent=total>available
-    ?'⚠️ Plus de points cochés que de points disponibles à ton niveau. Vérifie tes cases.'
+    ?'⚠️ Plus de points cochés que de points disponibles à ton niveau. Vérifie tes talents.'
     :total<available
-      ?`Il te reste ${available-total} point(s) à confirmer dans ton suivi.`
-      :'✓ Tous tes points disponibles sont cochés.';
+      ?`Il te reste ${available-total} point(s) à attribuer/confirmer.`
+      :'✓ Tous tes points disponibles sont attribués.';
+
   document.querySelectorAll('.step').forEach((el,i)=>{
-    el.classList.toggle('done',state.checked.includes(i));
+    const invested=state.points[i]||0;
+    el.classList.toggle('done',invested===maxPoints(i));
     el.classList.toggle('locked',steps[i][0]>state.level);
+    const counter=el.querySelector('.rank-counter');
+    if(counter) counter.textContent=`${invested}/${maxPoints(i)}`;
   });
 }
 
 function renderSteps(){
-  let root=$('steps');
+  const root=$('steps');
   root.innerHTML='';
+
   steps.forEach((s,i)=>{
     if(i===0||s[2]!==steps[i-1][2]){
-      let h=document.createElement('h3');
+      const h=document.createElement('h3');
       h.className='category';
       h.textContent=s[2]==='Finesse'
         ?'Finesse · 41 points (niveaux 10 à 50)'
         :'Assassinat · 20 points (niveaux 51 à 70)';
       root.append(h);
     }
-    let el=document.createElement('div');
+
+    const el=document.createElement('div');
     el.className='step';
-    let top=document.createElement('div');
+
+    const top=document.createElement('div');
     top.className='step-top';
-    let check=document.createElement('input');
-    check.type='checkbox';
-    check.checked=state.checked.includes(i);
-    check.setAttribute('aria-label',s[3]+' '+s[4]);
-    check.onchange=()=>{
-      state.checked=check.checked
-        ?[...new Set([...state.checked,i])]
-        :state.checked.filter(x=>x!==i);
-      save();
-    };
-    let main=document.createElement('div');
+
+    const main=document.createElement('div');
     main.className='step-main';
-    let title=document.createElement('div');
+
+    const title=document.createElement('div');
     title.className='step-title';
-    title.textContent=s[3]+' · '+s[4];
-    let meta=document.createElement('div');
+    title.textContent=s[3];
+
+    const meta=document.createElement('div');
     meta.className='step-meta';
     meta.textContent='Niveau '+(s[0]===s[1]?s[0]:s[0]+'–'+s[1]);
+
     main.append(title,meta);
-    top.append(check,main);
-    let desc=document.createElement('p');
+
+    const rank=document.createElement('strong');
+    rank.className='rank-counter';
+    rank.style.color='var(--gold)';
+    rank.style.minWidth='42px';
+    rank.style.textAlign='right';
+    rank.textContent=`${state.points[i]||0}/${maxPoints(i)}`;
+
+    top.append(main,rank);
+
+    const boxes=document.createElement('div');
+    boxes.className='rank-boxes';
+    boxes.style.display='flex';
+    boxes.style.gap='9px';
+    boxes.style.flexWrap='wrap';
+    boxes.style.margin='12px 0 2px 32px';
+
+    for(let p=1;p<=maxPoints(i);p++){
+      const wrap=document.createElement('label');
+      wrap.style.margin='0';
+      wrap.style.display='inline-flex';
+      wrap.style.alignItems='center';
+      wrap.style.justifyContent='center';
+      wrap.style.cursor='pointer';
+      wrap.title=`${s[3]} : point ${p}/${maxPoints(i)}`;
+
+      const check=document.createElement('input');
+      check.type='checkbox';
+      check.style.width='21px';
+      check.style.height='21px';
+      check.style.accentColor='#bd9457';
+      check.checked=(state.points[i]||0)>=p;
+      check.setAttribute('aria-label',`${s[3]} point ${p} sur ${maxPoints(i)}`);
+
+      check.addEventListener('change',()=>{
+        // Keep ranks sequential. Checking point 4 means 1-4 are invested.
+        // Unchecking point 3 removes points 3+.
+        state.points[i]=check.checked ? p : p-1;
+        renderSteps();
+        save();
+      });
+
+      wrap.append(check);
+      boxes.append(wrap);
+    }
+
+    const desc=document.createElement('p');
     desc.className='step-desc';
     desc.textContent=s[5];
-    el.append(top,desc);
+
+    el.append(top,boxes,desc);
     root.append(el);
   });
+
   renderStats();
 }
 
@@ -198,10 +290,11 @@ $('level').onchange=()=>{
   $('level').value=state.level;
   save();
 };
+
 $('saveLocal').onclick=save;
 $('reset').onclick=()=>{
-  if(confirm('Décocher toutes les étapes ?')){
-    state.checked=[];
+  if(confirm('Retirer tous les points de talents ?')){
+    state.points=Array(steps.length).fill(0);
     renderSteps();
     save();
   }
@@ -209,4 +302,5 @@ $('reset').onclick=()=>{
 
 renderSteps();
 readCloud();
+
 </script></body></html>
